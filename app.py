@@ -1,49 +1,67 @@
-# Import necessary libraries
 import streamlit as st
-from autonomous_agent import AutoDevAgent
+from autogpt import AutoGPT
 
-# Instantiate the autonomous agent
-agent = AutoDevAgent()
+# Initialize the AutoGPT model
+model = AutoGPT()
 
-# Streamlit UI setup
-st.title('AutoDev-Deploy')
-st.markdown('### Autonome Applicatie Bouwer')
+# Streamlit UI Components
+st.title('AutoDev-Deploy: Autonomous App Builder')
 
-# User input for application request
-user_input = st.text_input('Beschrijving van de gewenste applicatie:', '')
+# Start and Stop buttons
+def start_process():
+    st.session_state.running = True
+    run_autogpt_tasks(st.session_state.user_input)
 
-# Start, stop, kill process options
-col1, col2, col3 = st.columns([1, 1, 1])
+def stop_process():
+    st.session_state.running = False
 
-start_btn = col1.button('Start')
-stop_btn = col2.button('Stop')
-kill_btn = col3.button('Kill')
+# Process control
+if 'running' not in st.session_state:
+    st.session_state.running = False
 
-# Functionality buttons to show process or interaction
-show_process = st.checkbox('Toon processen')
-interact_toggle = st.checkbox('Interactie toestaan')
+# User Input
+user_input = st.text_input("Enter your project description:", "I want a todo app with a dark mode")
 
-# Initiating process based on user input
-if start_btn and user_input:
-    agent.set_goal(user_input)
-    agent.start_process()
+if user_input:
+    st.session_state.user_input = user_input
 
-# Option to stop the current process
-if stop_btn:
-    agent.stop_process()
+# Start and Stop Button
+st.button("Start", on_click=start_process, disabled=st.session_state.running)
+st.button("Stop", on_click=stop_process)
 
-# Kill the process in case of hanging
-if kill_btn:
-    agent.emergency_stop()
+# Kill switch for emergency stops
+def kill_switch():
+    st.session_state.running = False
+    st.error("Process killed!")
 
-# Display ongoing processes when checkbox is ticked
-if show_process:
-    for update in agent.get_updates():
-        st.write(update)
+st.button("Kill Switch", on_click=kill_switch)
 
-# Allow for dynamic user interaction if the option is toggled
-if interact_toggle:
-    interaction_input = st.text_input('Interactie:', '')
-    if st.button('Interactie verstuur'):
-        agent.user_interaction(interaction_input)
+# Chatbot feature for real-time progress updates
+def chat(message):
+    st.session_state.chat_log.append(message)
 
+if 'chat_log' not in st.session_state:
+    st.session_state.chat_log = []
+
+if st.session_state.running:
+    for message in st.session_state.chat_log:
+        st.write(message)
+
+def run_autogpt_tasks(description):
+    # Hypothetical recursive goal-setting and task execution process
+    chat("Parsing user input and starting goal recursion...")
+    # Recursive function to create tasks based on user input
+    tasks = model.create_tasks(description)
+    chat("Tasks created: " + str(tasks))
+
+    for task in tasks:
+        # Process each task
+        result = model.execute_task(task)
+        chat(f"Executed task {task}: {result}")
+
+        if result == "Deploy":
+            # Including CI/CD process
+            chat("Executing CI/CD pipeline...")
+
+# Note: A fully fleshed out system would include error handling, asynchronous execution,
+# persistent database for long-term memory, and integration with deployment services.
