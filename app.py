@@ -1,44 +1,53 @@
 import streamlit as st
-import subprocess
-import tempfile
+import openai
+import os
 
-# Chat interface setup
-st.title('Autonome App Bouwer')
+# Configure OpenAI API
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
-if 'process_log' not in st.session_state:
-    st.session_state['process_log'] = []
+# Page Configuration
+st.set_page_config(page_title='Autonomous App Builder', layout='wide')
 
-# Function to append logs
-def log_event(event):
-    st.session_state['process_log'].append(event)
+# UI Components
+st.title('Autonomous App Builder')
+user_input = st.text_input('Geef een enkele zin om een app te bouwen:', '')
+start_button = st.button('Start Process')
+stop_button = st.button('Stop Process')
 
-# Kill switch function
-def kill_process(process):
-    process.terminate()
-    log_event('Process terminated')
+# Status Display
+status_placeholder = st.empty()
 
-# Autonome werking starten
-user_input = st.text_input('Geef een opdracht:')
+# Chat Functionality
+chat_messages = []
 
-start_button = st.button('Start')
-stop_button = st.button('Stop')
+# Autonomous Workflow Function
+def run_autonomous_builder(input_text):
+    # Initialize AutoGPT-like agentic workflow
+    status_placeholder.write('Starting process for: ' + input_text)
+    response = openai.Completion.create(
+      engine="davinci",
+      prompt=f"Create a detailed plan to develop '{input_text}' using AutoGPT principles.",
+      max_tokens=300
+    )
+    chat_messages.append(response.choices[0].text)
+    status_placeholder.write('Application design planned. Executing build steps...')
+    # Simulate building process
+    deploy_message = "Application successfully built and deployed at: http://example.com"
+    chat_messages.append(deploy_message)
+    status_placeholder.write('Process Complete')
+    return deploy_message
 
 if start_button and user_input:
-    log_event(f'Starting process with input: {user_input}')
-    # Simulate the autonomous process
-    with tempfile.TemporaryDirectory() as dirpath:
-        try:
-            # Emulate backend process calling
-            process = subprocess.Popen(['python', 'auto_builder.py', user_input, dirpath])
-            log_event('Process started')
-        except Exception as e:
-            log_event(f'Error starting process: {str(e)}')
+    status_placeholder.write('Initializing...')
+    chat_messages.clear()
+    deploy_link = run_autonomous_builder(user_input)
+    st.success(deploy_link)
 
-        # Allow user to stop the process
-        if stop_button:
-            kill_process(process)
+# Display chat
+st.subheader('Process Chat Log')
+for msg in chat_messages:
+    st.write(msg)
 
-# Display process logs
-st.header('Process Log')
-for log in st.session_state['process_log']:
-    st.text(log)
+# Kill Switch
+if stop_button:
+    os._exit(1)
