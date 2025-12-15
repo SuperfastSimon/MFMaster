@@ -1,81 +1,34 @@
+
 import streamlit as st
 import openai
-import time
-# OpenAI API configuratie
-openai.api_key = 'YOUR_OPENAI_KEY'
+from autonomous_app_builder import AutonomousAppBuilder
 
-class AutoAppBuilderAgent:
-    def __init__(self, user_input):
-        self.user_input = user_input
-        self.thoughts_log = []
-        self.deployment_url = ''
-        self.conversation_log = []
+# Initialiseer de AutonomousAppBuilder met OpenAI GPT-4 APIs
+app_builder = AutonomousAppBuilder(api_key='your-openai-api-key')
 
-    def think(self, thought):
-        self.thoughts_log.append(thought)
+# Streamlit interface
+st.title('Autonome Applicatie Bouwer')
 
-    def chat(self, message):
-        response = openai.ChatCompletion.create(model="gpt-4", messages=[{"role": "system", "content": "You are a helpful assistant."},
-                                                                              {"role": "user", "content": message}])
-        self.conversation_log.append(("User", message))
-        self.conversation_log.append(("Agent", response.choices[0].message.content))
-        return response.choices[0].message.content
+# Gebruikersinput
+user_input = st.text_input('Beschrijf de applicatie die je wilt bouwen:')
 
-    def analyze_input(self):
-        self.think('Analyzing user input to determine application type and features.')
-        # Here we'd parse the user input to determine requirements such as app type, features, etc.
+# Start/Stop en Kill switches
+if st.button('Start Bouwen'):
+    st.session_state['building'] = True
+if st.button('Stop Bouwen'):
+    st.session_state['building'] = False
+if st.button('Kill Process'):
+    app_builder.kill_process()
 
-    def plan_app_structure(self):
-        self.think('Planning application structure and components.')
-        # Based on user input, plan the structure of the application
+# Bouwproces
+if st.session_state.get('building', False):
+    st.write('Applicatie aan het bouwen...')
+    app_url, build_log = app_builder.build_from_description(user_input)
+    st.write(f'Voltooide Applicatie: [Bezoek hier]({app_url})')
+    st.write(build_log)
 
-    def develop_application(self):
-        self.think('Developing the application based on planned structure.')
-        # Develop the application using pseudo code or pre-defined templates
-
-    def test_application(self):
-        self.think('Testing application before deployment.')
-        # Implement some form of automated testing
-
-    def deploy_application(self):
-        self.think('Deploying application to a web server.')
-        self.deployment_url = 'https://deployed-app.example.com' # Mock URL for deployment
-
-    def workflow(self):
-        self.analyze_input()
-        self.plan_app_structure()
-        self.develop_application()
-        self.test_application()
-        self.deploy_application()
-
-    def get_progress(self):
-        return self.thoughts_log, self.deployment_url, self.conversation_log
-
-st.title('AI Autonomous App Builder')
-
-if 'agent' not in st.session_state:
-    st.session_state.agent = None
-
-user_input = st.text_input('Enter your app idea:', '')
-
-if st.button('Start'):
-    if user_input:
-        st.session_state.agent = AutoAppBuilderAgent(user_input)
-        st.session_state.agent.workflow()
-        st.success('App building process initiated.')
-
-if st.button('Stop'):
-    st.session_state.agent = None
-    st.warning('Process stopped.')
-
-if st.session_state.agent:
-    thoughts, deployment_url, conversations = st.session_state.agent.get_progress()
-    st.subheader('Agent Thoughts')
-    st.write(thoughts)
-    st.subheader('Deployment URL')
-    st.write(deployment_url)
-    st.subheader('Conversation Log')
-    for role, content in conversations:
-        st.write(f"**{role}:** {content}")
-else:
-    st.info('Awaiting input...')
+# Chat functie
+st.subheader('Communicatie met de AI')
+if st.session_state.get('building', False):
+    for thought in app_builder.get_thoughts():
+        st.write(thought)
