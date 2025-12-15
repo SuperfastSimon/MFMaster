@@ -1,47 +1,62 @@
+# Import necessary libraries
 import streamlit as st
 
-# Import necessary libraries or modules for handling AutoGPT and deployment
-import auto_gpt_module
-import ci_cd_module
+# Import AutoGPT functionality and other backend functions
+from autogpt_engine import AutoGPT
+from ci_cd_pipeline import deploy_application
 
+# Initialize AutoGPT Engine
+engine = AutoGPT()
+
+# Streamlit UI for interaction
 st.title('AutoDev-Deploy')
 
-# Start and Stop buttons
+if 'process_running' not in st.session_state:
+    st.session_state.process_running = False
+
+# User input for application request
+user_input = st.text_input('Describe your application:', 'I want a todo app with a dark mode')
+
+# Start process button
 if st.button('Start Process'):
-    # Gather user input
-    user_input = st.text_input('Enter your application description:', 'Ik wil een todo-app met een donkere modus')
-    if user_input:
-        # Goal-recursion and initialization
-        initial_goal = f'Develop and deploy: {user_input}'
+    st.session_state.process_running = True
+    st.write('Processing...')
+    # Use AutoGPT to begin the development process
+    engine.start(user_input)
+    st.write('Process started, check logs for progress.')
 
-        # Chat to display processes
-        processes_log = []
-        processes_log.append(auto_gpt_module.initiate_process(initial_goal))
+# Display logs and chat messages
+process_chat = engine.get_chat_logs()
+for message in process_chat:
+    st.text(message)
 
-        # File-system and long-term memory interactions
-        processes_log.extend(auto_gpt_module.handle_file_system())
-        processes_log.extend(auto_gpt_module.store_long_term_memory(user_input))
-
-        # Internet access and autonomous development
-        processes_log.extend(auto_gpt_module.access_internet())
-        processes_log.extend(auto_gpt_module.handle_autonomous_development(user_input))
-
-        # CI/CD pipeline handling
-        deployment_status = ci_cd_module.deploy_application()
-        processes_log.append(deployment_status)
-
-        # Display process log
-        for process in processes_log:
-            st.write(process)
-
+# Stop process button
 if st.button('Stop Process'):
-    st.stop()
+    if st.session_state.process_running:
+        engine.stop()
+        st.session_state.process_running = False
+        st.write('Process has been stopped.')
 
-# Function buttons for file/builds access
-if st.button('View Builds'):
-    build_info = ci_cd_module.fetch_build_info()
-    st.write(build_info)
+# Display manual controls and kill switch
+st.header('Manual Controls')
+manual_controls = st.radio('Choose an action:', ('None', 'Pause', 'Resume', 'Terminate'))
 
-if st.button('Manage Files'):
-    file_info = auto_gpt_module.list_project_files()
-    st.write(file_info)
+if manual_controls == 'Pause':
+    engine.pause()
+    st.write('Process paused.')
+elif manual_controls == 'Resume':
+    engine.resume()
+    st.write('Process resumed.')
+elif manual_controls == 'Terminate':
+    engine.terminate()
+    st.session_state.process_running = False
+    st.write('Process terminated.')
+
+# Deployment button
+if st.button('Deploy Application'):
+    if st.session_state.process_running:
+        st.write('Please stop the process before deploying.')
+    else:
+        deploy_logs = deploy_application()
+        st.text(deploy_logs)
+        st.write('Application deployed successfully.')
