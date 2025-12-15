@@ -1,3 +1,5 @@
 streamlit
-auto-gpt-module
-ci-cd-module
+autogpt
+flask
+requests
+gunicorn
