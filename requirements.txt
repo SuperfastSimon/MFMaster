@@ -1,2 +1,3 @@
 streamlit
-autogpt
+# Other dependencies like the one for AI agent will go here
+dependencies_for_ai_builder
