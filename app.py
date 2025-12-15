@@ -1,57 +1,59 @@
-import streamlit as st
-import openai
-
-# Configuratie
-openai.api_key = 'YOUR_API_KEY'
-
-def main():
-    st.title('Autonome Applicatie Generator')
-    
-    # Input voor gebruikers
-    user_input = st.text_input('Voer een beschrijving van je app in:')
-    if st.button('Genereer App'):
-        with st.spinner('Bezig met genereren...'):
-            app_definition = generate_app_from_string(user_input)
-            st.success('App gegenereerd!')
-            st.code(app_definition)
-
-    # Start/Stop knoppen
-    if st.button('Start Chatfunctie'):
-        chat_mode()
-    if st.button('Stop Chatfunctie'):
-        st.stop()
-        
-    # Kill switch
-    if st.button('Kill Switch'):
-        # Placeholder functie voor de kill switch
-        st.warning('Process gestopt.')
-        st.stop()
-
-
 def generate_app_from_string(description):
-    # OpenAI API-aanroep met promts om AI volledige stappen te laten maken
-    response = openai.Completion.create(
-      model="text-davinci-003",
-      prompt=f"Autonome app-ontwikkeling: {description}",
-      temperature=0.5,
-      max_tokens=1500
-    )
-    return response['choices'][0]['text'].strip()
+    """
+    Genereert de app architectuur met zichtbaar denkproces.
+    """
+    try:
+        # We maken een visuele container voor het denkproces
+        thought_container = st.expander("🧠 Bekijk het denkproces van GPT-5", expanded=True)
+        
+        with thought_container:
+            st.write("Analyseren van input...")
+            st.write(f"Context: {description}")
 
-
-def chat_mode():
-    st.write("Chat functie gestart...")
-    # Simpele loop voor chatfunctie
-    input_text = st.text_input('Stel een vraag aan de app')
-    if input_text:
-        response = openai.Completion.create(
-            model="gpt-4o",
-            prompt=input_text,
+        # STAP 1: Vraag om een plan (Chain of Thought)
+        # We instrueren de AI om hardop te denken
+        response = client.chat.completions.create(
+            model="gpt-5", 
+            messages=[
+                {"role": "system", "content": """
+                 Je bent een Senior Software Architect. 
+                 Je antwoord moet bestaan uit twee delen:
+                 1. [REDENERING]: Leg uit welke keuzes je maakt (tech stack, database, structuur) en waarom.
+                 2. [ONTWERP]: De uiteindelijke technische specificatie.
+                 """},
+                {"role": "user", "content": f"Ontwerp de volgende app: {description}"}
+            ],
             temperature=0.5,
-            max_tokens=150
+            stream=True # We streamen het antwoord voor een 'live' effect
         )
-        st.write('AI:', response['choices'][0]['text'].strip())
 
+        # Variabelen om de stream op te vangen
+        full_response = ""
+        placeholder_reasoning = thought_container.empty()
+        placeholder_result = st.empty()
+        
+        # Live weergave van de tokens
+        accumulated_reasoning = ""
+        is_reasoning = True # We nemen aan dat hij begint met redeneren door onze prompt
+        
+        for chunk in response:
+            if chunk.choices[0].delta.content:
+                text_chunk = chunk.choices[0].delta.content
+                full_response += text_chunk
+                
+                # Simpele logica om te zien of we nog aan het redeneren zijn
+                # (In een echte productie-app zou je JSON mode gebruiken voor strikte scheiding)
+                if "[ONTWERP]" in text_chunk:
+                    is_reasoning = False
+                
+                if is_reasoning:
+                    accumulated_reasoning += text_chunk
+                    placeholder_reasoning.info(accumulated_reasoning)
+                else:
+                    # Toon het uiteindelijke resultaat in het hoofdvenster
+                    placeholder_result.markdown(full_response.split("[ONTWERP]")[-1])
 
-if __name__ == "__main__":
-    main()
+        return full_response.split("[ONTWERP]")[-1]
+        
+    except Exception as e:
+        return f"Error: {str(e)}"
