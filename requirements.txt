@@ -1,5 +1,2 @@
 streamlit
-autogpt
-flask
-requests
-gunicorn
+autonomous-agent-lib
