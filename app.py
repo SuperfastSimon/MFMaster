@@ -1,40 +1,44 @@
-# Import necessary libraries
 import streamlit as st
-from ai_builder import AIAgent
+import subprocess
+import tempfile
 
-# Initialize the AI Agent
-agent = AIAgent()
+# Chat interface setup
+st.title('Autonome App Bouwer')
 
-# Streamlit UI
-st.title('Autonomous Application Builder')
+if 'process_log' not in st.session_state:
+    st.session_state['process_log'] = []
 
-# Input from the user
-user_input = st.text_input('Enter your app description:')
+# Function to append logs
+def log_event(event):
+    st.session_state['process_log'].append(event)
 
-# Start and stop buttons
-if st.button('Start'):
-    if user_input:
-        agent.process(user_input)
-        st.success('Processing...')
-    else:
-        st.warning('Please provide a description.')
+# Kill switch function
+def kill_process(process):
+    process.terminate()
+    log_event('Process terminated')
 
-if st.button('Stop'):
-    agent.stop_process()
-    st.info('Process stopped')
+# Autonome werking starten
+user_input = st.text_input('Geef een opdracht:')
 
-# Chat function to show agent's thought process
-st.subheader('Agent Process Log')
-for message in agent.get_process_log():
-    st.write(message)
+start_button = st.button('Start')
+stop_button = st.button('Stop')
 
-# Function buttons
-st.subheader('Agent Controls')
-if st.button('Kill Switch'):
-    agent.kill_switch()
-    st.error('Agent terminated')
+if start_button and user_input:
+    log_event(f'Starting process with input: {user_input}')
+    # Simulate the autonomous process
+    with tempfile.TemporaryDirectory() as dirpath:
+        try:
+            # Emulate backend process calling
+            process = subprocess.Popen(['python', 'auto_builder.py', user_input, dirpath])
+            log_event('Process started')
+        except Exception as e:
+            log_event(f'Error starting process: {str(e)}')
 
-# Display deployment status
-st.subheader('Deployment Status')
-deployment_status = agent.get_deployment_status()
-st.write(deployment_status)
+        # Allow user to stop the process
+        if stop_button:
+            kill_process(process)
+
+# Display process logs
+st.header('Process Log')
+for log in st.session_state['process_log']:
+    st.text(log)
