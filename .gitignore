@@ -1,0 +1,12 @@
+# Negeer Python systeem bestanden
+__pycache__/
+*.pyc
+venv/
+.env
+
+# CRUCIAAL: Negeer je geheimen
+.streamlit/secrets.toml
+secrets.toml
+
+# Negeer logs
+*.log
