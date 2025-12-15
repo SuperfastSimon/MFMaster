@@ -1,62 +1,49 @@
 # Import necessary libraries
 import streamlit as st
+from autonomous_agent import AutoDevAgent
 
-# Import AutoGPT functionality and other backend functions
-from autogpt_engine import AutoGPT
-from ci_cd_pipeline import deploy_application
+# Instantiate the autonomous agent
+agent = AutoDevAgent()
 
-# Initialize AutoGPT Engine
-engine = AutoGPT()
-
-# Streamlit UI for interaction
+# Streamlit UI setup
 st.title('AutoDev-Deploy')
-
-if 'process_running' not in st.session_state:
-    st.session_state.process_running = False
+st.markdown('### Autonome Applicatie Bouwer')
 
 # User input for application request
-user_input = st.text_input('Describe your application:', 'I want a todo app with a dark mode')
+user_input = st.text_input('Beschrijving van de gewenste applicatie:', '')
 
-# Start process button
-if st.button('Start Process'):
-    st.session_state.process_running = True
-    st.write('Processing...')
-    # Use AutoGPT to begin the development process
-    engine.start(user_input)
-    st.write('Process started, check logs for progress.')
+# Start, stop, kill process options
+col1, col2, col3 = st.columns([1, 1, 1])
 
-# Display logs and chat messages
-process_chat = engine.get_chat_logs()
-for message in process_chat:
-    st.text(message)
+start_btn = col1.button('Start')
+stop_btn = col2.button('Stop')
+kill_btn = col3.button('Kill')
 
-# Stop process button
-if st.button('Stop Process'):
-    if st.session_state.process_running:
-        engine.stop()
-        st.session_state.process_running = False
-        st.write('Process has been stopped.')
+# Functionality buttons to show process or interaction
+show_process = st.checkbox('Toon processen')
+interact_toggle = st.checkbox('Interactie toestaan')
 
-# Display manual controls and kill switch
-st.header('Manual Controls')
-manual_controls = st.radio('Choose an action:', ('None', 'Pause', 'Resume', 'Terminate'))
+# Initiating process based on user input
+if start_btn and user_input:
+    agent.set_goal(user_input)
+    agent.start_process()
 
-if manual_controls == 'Pause':
-    engine.pause()
-    st.write('Process paused.')
-elif manual_controls == 'Resume':
-    engine.resume()
-    st.write('Process resumed.')
-elif manual_controls == 'Terminate':
-    engine.terminate()
-    st.session_state.process_running = False
-    st.write('Process terminated.')
+# Option to stop the current process
+if stop_btn:
+    agent.stop_process()
 
-# Deployment button
-if st.button('Deploy Application'):
-    if st.session_state.process_running:
-        st.write('Please stop the process before deploying.')
-    else:
-        deploy_logs = deploy_application()
-        st.text(deploy_logs)
-        st.write('Application deployed successfully.')
+# Kill the process in case of hanging
+if kill_btn:
+    agent.emergency_stop()
+
+# Display ongoing processes when checkbox is ticked
+if show_process:
+    for update in agent.get_updates():
+        st.write(update)
+
+# Allow for dynamic user interaction if the option is toggled
+if interact_toggle:
+    interaction_input = st.text_input('Interactie:', '')
+    if st.button('Interactie verstuur'):
+        agent.user_interaction(interaction_input)
+
