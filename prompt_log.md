@@ -1,4 +1,4 @@
-# Log 2025-12-15 12:02
+# Log 2025-12-15 12:07
 ​De Prompt
 ​Kopieer en plak de onderstaande tekst in je AI-interface:
 ​Rol: Fungeer als een Senior AI System Architect en Expert in Autonomous Agentic Workflows.
@@ -8,3 +8,4 @@
 ​Het ontwerp moet gebaseerd zijn op de AutoGPT-principes (doel-recursie, lange-termijn geheugen, internettoegang en file-system beheer).
 ​Deployment moet onderdeel zijn van de keten (CI/CD).
 ​
+Geef hem een chat functie zodat de processen en of reacties zichtbaar zijn, een start en stop knop en inzicht /invloed dmv functieknoppen waar de bestanden of builds terug te vinden zijn
