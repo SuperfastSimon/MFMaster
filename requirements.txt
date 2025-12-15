@@ -1,2 +1,2 @@
 streamlit
-autonomous-agent-lib
+autogpt
