@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+import openai>=1.0.0
 import os
 
 # Configure OpenAI API
